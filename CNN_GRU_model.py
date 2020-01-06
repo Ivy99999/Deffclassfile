@@ -105,10 +105,10 @@ for epoch in range(num_epoches):
             y = Variable(y, volatile=True)
         out = model(x)
         loss = criterion(out, y)
-        eval_loss += loss.data[0] * len(y)
+        eval_loss += loss.item() * len(y)
         _, pre = torch.max(out, 1)
         num_acc = (pre == y).sum()
-        eval_acc += num_acc.data[0]
+        eval_acc += num_acc.item()
     print('test loss is:{:.6f},test acc is:{:.6f}'.format(
         eval_loss / (len(testDataLoader) * batch_size),
         eval_acc / (len(testDataLoader) * batch_size)))
