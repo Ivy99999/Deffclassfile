@@ -51,6 +51,7 @@ def get_data():
     # print(data[0:5])
     # print(data_label[0:5])
     vocab=[word for s in data for word in s.split()]
+    # print(vocab)
     vocab=set(vocab)
     #print(vocab)
     for word in vocab:
@@ -58,9 +59,11 @@ def get_data():
         word_to_inx[word]=len(word_to_inx)
     data_id=[]
     for s in data:
+        # print(s)
         s_id=[]
         for word in s.split():
             s_id.append(word_to_inx[word])
+            # print(s_id)
         s_id=s_id+[0]*(MAX_LEN-len(s_id))
         data_id.append(s_id)
     # 求出句子的最大长度
@@ -72,6 +75,7 @@ def get_data():
     # 318
     # print(data_id[5:10])
     # print(len(data_id),' ',len(data_label))
+    # print(data_id)
     return data_id,data_label,word_to_inx,inx_to_word
 #获取两个字典
 def get_dic():
@@ -84,7 +88,9 @@ def tensorFromData():
     data_id_train, data_id_test, data_label_train, data_label_test = train_test_split(data_id, data_lable,
                                                                                       test_size=0.2,
                                                                                       random_state=20180127)
+    # print(data_id_train)
     data_id_train=torch.LongTensor(data_id_train)
+
     data_id_test=torch.LongTensor(data_id_test)
     data_label_train=torch.LongTensor(data_label_train)
     data_label_test=torch.LongTensor(data_label_test)

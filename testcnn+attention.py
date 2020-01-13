@@ -4,16 +4,16 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import data_preprocess
 import os
-
+import torch.nn.functional as F
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 use_cuda = torch.cuda.is_available()
-
+##最外层的atention
 # 将数据划分为训练集和测试集
 X_train, X_test, Y_train, Y_test = data_preprocess.tensorFromData()
 trainDataSet = data_preprocess.TextDataSet(X_train, Y_train)
 testDataSet = data_preprocess.TextDataSet(X_test, Y_test)
-trainDataLoader = DataLoader(trainDataSet, batch_size=16, shuffle=True)
-testDataLoader = DataLoader(testDataSet, batch_size=16, shuffle=False)
+trainDataLoader = DataLoader(trainDataSet, batch_size=64, shuffle=True)
+testDataLoader = DataLoader(testDataSet, batch_size=64, shuffle=False)
 print(trainDataLoader)
 
 # 获取字典
@@ -25,7 +25,7 @@ MAXLEN = 64
 input_dim = MAXLEN
 emb_dim = 128
 num_epoches = 20
-batch_size = 16
+batch_size = 64
 
 
 # 定义模型
@@ -38,23 +38,55 @@ class CNN_GRU_model(nn.Module):
             nn.ReLU(True),
             nn.MaxPool1d(2, 2)  # b,256,64 -> 256,b,64
         )
-        self.gru1 = nn.GRU(input_size=64, hidden_size=256, dropout=0.2) # 256,b,256
-        self.gru2 = nn.GRU(input_size=256, hidden_size=256, dropout=0.2)  # 256,b,256 -> b,256
-        self.classify = nn.Linear(256, 3)  # b,3
+
+        self.tanh1 = nn.Tanh()
+        self.w = nn.Parameter(torch.Tensor(64))
+        self.tanh2 = nn.Tanh()
+        self.fc1 = nn.Linear(64, 256)
+        self.fc = nn.Linear(256, 3)
+
+
+
+        # self.gru1 = nn.GRU(input_size=64, hidden_size=256, dropout=0.2) # 256,b,256
+        # self.gru2 = nn.GRU(input_size=256, hidden_size=256, dropout=0.2)  # 256,b,256 -> b,256
+        # self.classify = nn.Linear(12,128)  # b,3
 
     def forward(self, x):
         x = self.embed(x)
-        x = self.conv(x)
-        # print(x.shape)
+        x = self.conv(x)#[16, 256, 64]
+
+
         # print("before:",x.size())
-        x = x.permute(1, 0, 2)
+        # x = x.permute(1, 0, 2)
+
         # print("change:",x.size())
-        out, _ = self.gru1(x)
-        out,_=self.gru2(out)
-        out = out[-1, :, :]
-        # print(out.size())
-        out = self.classify(out)
-        # print(out.size())
+        M = self.tanh1(x)#[16, 256, 64]
+        # print(M.shape)
+        # print(self.w.shape)
+        # M = M.permute( 0,2,1)
+        # print(M.shape)
+        # x = x.permute(2, 1,0 )
+
+        alpha = F.softmax(torch.matmul(M, self.w), dim=1).unsqueeze(-1)  # [64, 16, 1]
+        # print(alpha.shape)
+        out = x * alpha  # [128, 32, 256]
+        out = torch.sum(out, 1)  # [128, 256]
+        out = F.relu(out)
+
+        # print(out.shape)
+        out = self.fc1(out)
+        # print(out.shape)
+        # out = out.permute( 1, 0)
+        # print(out.shape)
+        out = self.fc(out)  # [128, 64]
+        # out=self.classify(out)
+        # out, _ = self.gru1(x)
+        # out,_=self.gru2(out)
+        # out = out[-1, :, :]
+        # # print(out.size())
+        # out = self.classify(out)
+        # # print(out.size())
+        # print(out.shape)
         return out
 
 
