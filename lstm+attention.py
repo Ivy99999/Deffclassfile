@@ -40,7 +40,6 @@ class Config(object):
 
 '''Attention-Based Bidirectional Long Short-Term Memory Networks for Relation Classification'''
 
-
 class Model(nn.Module):
     def __init__(self, config):
         super(Model, self).__init__()
