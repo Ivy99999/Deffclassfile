@@ -112,10 +112,10 @@ for epoch in range(num_epoches):
         # forward
         out = model(x)
         loss = criterion(out, y)
-        train_loss += loss * len(y)
+        train_loss += loss.item() * len(y)
         _, pre = torch.max(out, 1)
         num_acc = (pre == y).sum()
-        train_acc += num_acc
+        train_acc += num_acc.item()
         # backward
         optimzier.zero_grad()
         loss.backward()
